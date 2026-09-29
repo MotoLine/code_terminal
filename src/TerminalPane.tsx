@@ -1,4 +1,6 @@
 import {
+  ChevronDown,
+  ChevronUp,
   Plus,
   SendHorizontal,
   Terminal,
@@ -453,6 +455,7 @@ export function TerminalPane({
     request: TerminalCommandRequest;
   } | null>(null);
   const [composerInputValue, setComposerInputValue] = useState("");
+  const [isComposerExpanded, setIsComposerExpanded] = useState(false);
   const renderColumnWeights = useMemo(
     () => normalizeGridWeights(columnWeights, activeLayout.columns),
     [activeLayout.columns, columnWeights],
@@ -493,6 +496,7 @@ export function TerminalPane({
   }
 
   function focusComposer() {
+    setIsComposerExpanded(true);
     window.setTimeout(() => composerInputRef.current?.focus(), 0);
   }
 
@@ -1051,7 +1055,7 @@ export function TerminalPane({
 
   useEffect(() => {
     scheduleVisibleTerminalFit(true);
-  }, [layoutPreferences, visibleTabs]);
+  }, [layoutPreferences]);
 
   useEffect(() => {
     setColumnWeights(createEqualWeights(activeLayout.columns));
@@ -1322,40 +1326,55 @@ export function TerminalPane({
           ))}
       </div>
 
-      <form
-        className="terminal-composer"
-        aria-label="对话输入"
-        onSubmit={(event) => {
-          event.preventDefault();
-          submitComposerInput();
-        }}
-      >
-        <textarea
-          ref={composerInputRef}
-          className="terminal-composer-input"
-          aria-label="输入内容"
-          autoCapitalize="off"
-          autoCorrect="off"
-          enterKeyHint="send"
-          placeholder="输入给当前会话"
-          rows={2}
-          spellCheck={false}
-          value={composerInputValue}
-          onChange={(event) => setComposerInputValue(event.target.value)}
-          onBeforeInput={handleComposerBeforeInput}
-          onKeyDownCapture={handleComposerInputKeyDown}
-          onKeyDown={handleComposerInputKeyDown}
-          onPaste={handleComposerPaste}
-        />
+      <div className={`terminal-composer-area ${isComposerExpanded ? "expanded" : ""}`}>
         <button
-          className="terminal-composer-send"
-          disabled={!hasComposerText}
-          title="发送"
-          type="submit"
+          aria-controls="terminal-composer-form"
+          aria-expanded={isComposerExpanded}
+          className="terminal-composer-toggle"
+          onClick={() => setIsComposerExpanded((expanded) => !expanded)}
+          title={isComposerExpanded ? "收起辅助输入区" : "展开辅助输入区"}
+          type="button"
         >
-          <SendHorizontal size={16} />
+          <span>辅助输入</span>
+          {isComposerExpanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
         </button>
-      </form>
+        <form
+          aria-label="对话输入"
+          className="terminal-composer"
+          hidden={!isComposerExpanded}
+          id="terminal-composer-form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            submitComposerInput();
+          }}
+        >
+          <textarea
+            ref={composerInputRef}
+            className="terminal-composer-input"
+            aria-label="输入内容"
+            autoCapitalize="off"
+            autoCorrect="off"
+            enterKeyHint="send"
+            placeholder="输入给当前会话"
+            rows={2}
+            spellCheck={false}
+            value={composerInputValue}
+            onChange={(event) => setComposerInputValue(event.target.value)}
+            onBeforeInput={handleComposerBeforeInput}
+            onKeyDownCapture={handleComposerInputKeyDown}
+            onKeyDown={handleComposerInputKeyDown}
+            onPaste={handleComposerPaste}
+          />
+          <button
+            className="terminal-composer-send"
+            disabled={!hasComposerText}
+            title="发送"
+            type="submit"
+          >
+            <SendHorizontal size={16} />
+          </button>
+        </form>
+      </div>
     </section>
   );
 }

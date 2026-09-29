@@ -2717,17 +2717,13 @@ export const TerminalSessionView = forwardRef<TerminalSessionHandle, TerminalSes
 
     useEffect(() => {
       isActiveRef.current = isActive;
-
-      if (isActive) {
-        scheduleFitAndResize({ force: true, settle: true });
-      }
     }, [isActive]);
 
     useEffect(() => {
       isVisibleRef.current = isVisible;
       if (!isVisible) return;
 
-      scheduleFitAndResize({ force: true, settle: true });
+      scheduleFitAndResize();
     }, [isVisible]);
 
     useEffect(() => {
