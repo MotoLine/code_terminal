@@ -1,5 +1,6 @@
 import { FitAddon } from "@xterm/addon-fit";
 import { TerminalCursorController } from "./terminalCursorController";
+import { TerminalCursorOutputFilter } from "./terminalCursorOutputFilter";
 import { Terminal as XTerm } from "@xterm/xterm";
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import "@xterm/xterm/css/xterm.css";
@@ -263,6 +264,7 @@ export const TerminalSessionView = forwardRef<TerminalSessionHandle, TerminalSes
     const outputWriterActiveRef = useRef(false);
     const outputCursorSuppressedRef = useRef(false);
     const outputCursorControllerRef = useRef<TerminalCursorController | null>(null);
+    const terminalCursorOutputFilterRef = useRef(new TerminalCursorOutputFilter());
     const terminalTuiImeStableRef = useRef(false);
     const terminalImeCompositionActiveRef = useRef(false);
     const terminalImeStabilizeHoldRef = useRef(false);
@@ -2058,6 +2060,7 @@ export const TerminalSessionView = forwardRef<TerminalSessionHandle, TerminalSes
     function clearOutputQueue() {
       outputQueueRef.current = [];
       outputWriterActiveRef.current = false;
+      terminalCursorOutputFilterRef.current.reset();
       resetLiveTuiSnapshotState();
       if (codexWelcomeMessageIdRef.current) {
         const messageId = codexWelcomeMessageIdRef.current;
@@ -2156,7 +2159,10 @@ export const TerminalSessionView = forwardRef<TerminalSessionHandle, TerminalSes
     function enqueueTerminalOutput(data: string) {
       if (!data) return;
 
-      const displayData = mapLightThemeTuiBackgrounds(data, appearance);
+      const normalizedData = terminalCursorOutputFilterRef.current.write(data);
+      if (!normalizedData) return;
+
+      const displayData = mapLightThemeTuiBackgrounds(normalizedData, appearance);
       updateTuiContextUsageFromText(displayData);
       const terminal = terminalRef.current;
       const activeAlternateBuffer = terminal?.buffer.active.type === "alternate";
@@ -2853,6 +2859,8 @@ export const TerminalSessionView = forwardRef<TerminalSessionHandle, TerminalSes
 
       const unlistenExit = listen<TerminalExit>("terminal-exit", (event) => {
         if (event.payload.sessionId !== sessionIdRef.current) return;
+        const incompleteOutput = terminalCursorOutputFilterRef.current.flush();
+        if (incompleteOutput) enqueueTerminalOutput(incompleteOutput);
         sessionIdRef.current = null;
         dialogConversationStartedRef.current = false;
         setSession(null);

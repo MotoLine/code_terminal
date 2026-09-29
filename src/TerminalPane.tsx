@@ -19,6 +19,7 @@ import {
 } from "./TerminalSessionView";
 import { formatPastedImagePath, getClipboardImageItem, saveClipboardImage } from "./clipboardImages";
 import { createClientId } from "./ids";
+import { getTabIdForProjectFocus } from "./terminalTabFocus";
 import type { TerminalAppearanceSettings, TerminalCommandRequest } from "./types";
 
 interface TerminalPaneProps {
@@ -974,11 +975,15 @@ export function TerminalPane({
     setTerminalTabs((current) => {
       if (!activeProjectId) return current;
 
-      const existingTab = current.tabs.find((tab) => tab.projectId === activeProjectId);
-      if (existingTab) {
+      const focusedProjectTabId = getTabIdForProjectFocus(
+        current.tabs,
+        current.activeTabId,
+        activeProjectId,
+      );
+      if (focusedProjectTabId) {
         return {
           ...current,
-          activeTabId: existingTab.id,
+          activeTabId: focusedProjectTabId,
         };
       }
 
