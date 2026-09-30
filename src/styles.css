@@ -2500,6 +2500,12 @@ textarea {
   touch-action: pan-y;
 }
 
+.terminal-host.terminal-ime-anchored .composition-view,
+.terminal-host.terminal-ime-anchored .xterm-helper-textarea {
+  left: var(--terminal-ime-left) !important;
+  top: var(--terminal-ime-top) !important;
+}
+
 .terminal-host .xterm-viewport {
   background-color: transparent;
   overflow-y: auto;

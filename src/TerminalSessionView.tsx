@@ -1,6 +1,7 @@
 import { FitAddon } from "@xterm/addon-fit";
 import { TerminalCursorController } from "./terminalCursorController";
 import { TerminalCursorOutputFilter } from "./terminalCursorOutputFilter";
+import { TerminalImeAnchor } from "./terminalImeAnchor";
 import { Terminal as XTerm } from "@xterm/xterm";
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import "@xterm/xterm/css/xterm.css";
@@ -267,6 +268,7 @@ export const TerminalSessionView = forwardRef<TerminalSessionHandle, TerminalSes
     const terminalCursorOutputFilterRef = useRef(new TerminalCursorOutputFilter());
     const terminalTuiImeStableRef = useRef(false);
     const terminalImeCompositionActiveRef = useRef(false);
+    const terminalImeAnchorRef = useRef(new TerminalImeAnchor());
     const terminalImeStabilizeHoldRef = useRef(false);
     const terminalImeStabilizeHoldTimerRef = useRef<number | null>(null);
     const lastResizeRef = useRef<{ cols: number; rows: number } | null>(null);
@@ -1737,6 +1739,7 @@ export const TerminalSessionView = forwardRef<TerminalSessionHandle, TerminalSes
     }
 
     function resetTerminalTuiImeStabilization() {
+      terminalImeAnchorRef.current.release();
       if (terminalImeStabilizeHoldTimerRef.current) {
         window.clearTimeout(terminalImeStabilizeHoldTimerRef.current);
         terminalImeStabilizeHoldTimerRef.current = null;
@@ -1768,6 +1771,16 @@ export const TerminalSessionView = forwardRef<TerminalSessionHandle, TerminalSes
       }
 
       terminalImeCompositionActiveRef.current = active;
+      if (active) {
+        const host = hostRef.current;
+        const textarea = terminalRef.current?.textarea;
+        if (host && textarea) terminalImeAnchorRef.current.start(host, textarea);
+      } else {
+        terminalImeAnchorRef.current.release();
+        // A resize may have arrived while composing. Measure the latest size
+        // after xterm finishes committing the text, even without another RO event.
+        scheduleFitAndResize();
+      }
       writeTuiDebugLog(active ? "terminal-ime-composition-start" : "terminal-ime-composition-end");
       if (!active) {
         scheduleTerminalImeStabilizeHold();
@@ -2459,6 +2472,10 @@ export const TerminalSessionView = forwardRef<TerminalSessionHandle, TerminalSes
       const fit = fitRef.current;
       if (!terminal || !fit) return null;
 
+      // Do not move the IME origin mid-composition. End/blur replays the fit;
+      // the post-input cursor suppression hold must NOT postpone layout fitting.
+      if (terminalImeCompositionActiveRef.current) return null;
+
       const hostSize = getTerminalHostSize();
       if (!hasTerminalHostSizeChanged(hostSize)) {
         return {
@@ -2807,6 +2824,7 @@ export const TerminalSessionView = forwardRef<TerminalSessionHandle, TerminalSes
       };
       terminal.textarea?.addEventListener("compositionstart", compositionStartListener);
       terminal.textarea?.addEventListener("compositionend", compositionEndListener);
+      terminal.textarea?.addEventListener("blur", compositionEndListener);
 
       const focusInListener = () => {
         logFocusDebug("focusin");
@@ -2836,18 +2854,6 @@ export const TerminalSessionView = forwardRef<TerminalSessionHandle, TerminalSes
       host.addEventListener("paste", pasteListener, { capture: true });
 
       const resizeObserver = new ResizeObserver(() => {
-        const nextSize = getTerminalHostSize();
-        const previousSize = lastFitHostSizeRef.current;
-        // Expanding/collapsing the auxiliary composer only changes the host
-        // height. Keep the existing xterm rows in place so that this UI toggle
-        // does not trigger a PTY resize and visible redraw flicker.
-        if (
-          previousSize &&
-          nextSize &&
-          Math.abs(previousSize.width - nextSize.width) < terminalHostSizeEpsilon
-        ) {
-          return;
-        }
         scheduleFitAndResize();
       });
       const handleViewportResize = () => {
@@ -2889,6 +2895,7 @@ export const TerminalSessionView = forwardRef<TerminalSessionHandle, TerminalSes
         host.removeEventListener("paste", pasteListener, { capture: true });
         terminal.textarea?.removeEventListener("compositionstart", compositionStartListener);
         terminal.textarea?.removeEventListener("compositionend", compositionEndListener);
+        terminal.textarea?.removeEventListener("blur", compositionEndListener);
         terminal.attachCustomKeyEventHandler(() => true);
         bufferDisposable.dispose();
         dataDisposable.dispose();
