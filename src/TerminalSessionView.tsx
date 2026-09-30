@@ -304,7 +304,8 @@ export const TerminalSessionView = forwardRef<TerminalSessionHandle, TerminalSes
     const viewModeRef = useRef<TerminalViewMode>("terminal");
     const [session, setSession] = useState<TerminalStarted | null>(null);
     const [isStarting, setIsStarting] = useState(false);
-    const [conversationMessages, setConversationMessages] = useState<ConversationMessage[]>([]);
+    const conversationMessagesRef = useRef<ConversationMessage[]>([]);
+    const [conversationMessages, publishConversationMessages] = useState<ConversationMessage[]>([]);
     const [tuiContextUsage, setTuiContextUsage] = useState<TuiContextUsage | null>(null);
     const [dialogQuickScrollVisible, setDialogQuickScrollVisible] = useState(false);
     const [viewMode, setViewMode] = useState<TerminalViewMode>(() => {
@@ -317,6 +318,18 @@ export const TerminalSessionView = forwardRef<TerminalSessionHandle, TerminalSes
     });
     activeProjectIdRef.current = activeProjectId;
     viewModeRef.current = viewMode;
+
+    // Keep recording the transcript while xterm is visible, but do not rebuild
+    // the hidden dialog DOM (or run its scroll/layout effect) at stream end.
+    function setConversationMessages(
+      update: ConversationMessage[] | ((current: ConversationMessage[]) => ConversationMessage[]),
+    ) {
+      const current = conversationMessagesRef.current;
+      const next = typeof update === "function" ? update(current) : update;
+      if (next === current) return;
+      conversationMessagesRef.current = next;
+      if (viewModeRef.current === "dialog") publishConversationMessages(next);
+    }
 
     function shouldSuppressTerminalError(err: unknown) {
       const message = String(err);
@@ -1682,6 +1695,15 @@ export const TerminalSessionView = forwardRef<TerminalSessionHandle, TerminalSes
         });
 
         if (firstExistingIndex >= 0) {
+          const existingGroup = current.filter((message) => message.tuiGroupId === messageId);
+          if (
+            existingGroup.length === nextGroupedMessages.length &&
+            existingGroup.every((message, index) => {
+              const next = nextGroupedMessages[index];
+              return message.id === next.id && message.role === next.role &&
+                message.text === next.text && areConversationLinesEqual(message.lines, next.lines);
+            })
+          ) return current;
           const nextMessages = current.filter((message) => message.tuiGroupId !== messageId);
           nextMessages.splice(firstExistingIndex, 0, ...nextGroupedMessages);
           return nextMessages.slice(-maxConversationMessages);
@@ -1817,6 +1839,7 @@ export const TerminalSessionView = forwardRef<TerminalSessionHandle, TerminalSes
       resetTerminalTouchScroll();
       setViewMode("dialog");
       viewModeRef.current = "dialog";
+      publishConversationMessages(conversationMessagesRef.current);
       rememberTerminalViewMode("dialog");
       syncTerminalTuiImeStableClass();
       blurTerminalInput();
@@ -1835,6 +1858,9 @@ export const TerminalSessionView = forwardRef<TerminalSessionHandle, TerminalSes
       resetTerminalTouchScroll();
       setViewMode("terminal");
       viewModeRef.current = "terminal";
+      // Remove hidden transcript nodes; the authoritative transcript remains
+      // in the ref and is restored on switching back to dialog.
+      publishConversationMessages([]);
       rememberTerminalViewMode("terminal");
       syncTerminalTuiImeStableClass();
       writeTuiDebugLog("view-mode-terminal");
@@ -2706,7 +2732,7 @@ export const TerminalSessionView = forwardRef<TerminalSessionHandle, TerminalSes
 
     useEffect(() => {
       const log = conversationLogRef.current;
-      if (!log) return;
+      if (!log || viewModeRef.current !== "dialog") return;
 
       log.scrollTop = log.scrollHeight;
       syncDialogQuickScroll();
