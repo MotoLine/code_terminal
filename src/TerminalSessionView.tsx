@@ -2836,6 +2836,18 @@ export const TerminalSessionView = forwardRef<TerminalSessionHandle, TerminalSes
       host.addEventListener("paste", pasteListener, { capture: true });
 
       const resizeObserver = new ResizeObserver(() => {
+        const nextSize = getTerminalHostSize();
+        const previousSize = lastFitHostSizeRef.current;
+        // Expanding/collapsing the auxiliary composer only changes the host
+        // height. Keep the existing xterm rows in place so that this UI toggle
+        // does not trigger a PTY resize and visible redraw flicker.
+        if (
+          previousSize &&
+          nextSize &&
+          Math.abs(previousSize.width - nextSize.width) < terminalHostSizeEpsilon
+        ) {
+          return;
+        }
         scheduleFitAndResize();
       });
       const handleViewportResize = () => {

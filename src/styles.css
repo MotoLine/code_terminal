@@ -1686,6 +1686,13 @@ textarea {
   outline-offset: 1px;
 }
 
+.terminal-composer-toggle svg {
+  display: block;
+  flex: 0 0 15px;
+  width: 15px;
+  height: 15px;
+}
+
 .terminal-composer-area:not(.expanded) .terminal-composer-toggle {
   margin-bottom: 14px;
 }
@@ -2488,10 +2495,6 @@ textarea {
   touch-action: pan-y;
 }
 
-.terminal-session.mode-terminal .terminal-host .xterm {
-  padding-top: 46px;
-}
-
 .terminal-host .xterm-screen {
   background: transparent;
   touch-action: pan-y;
@@ -2524,8 +2527,7 @@ textarea {
 }
 
 .terminal-host.active.terminal-tui-ime-stable .xterm-cursor,
-.terminal-host.active.terminal-tui-ime-stable .xterm-cursor-layer,
-.terminal-host.active.terminal-tui-ime-stable .composition-view {
+.terminal-host.active.terminal-tui-ime-stable .xterm-cursor-layer {
   opacity: 0 !important;
   visibility: hidden !important;
 }
