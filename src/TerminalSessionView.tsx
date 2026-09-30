@@ -2,6 +2,7 @@ import { FitAddon } from "@xterm/addon-fit";
 import { TerminalCursorController } from "./terminalCursorController";
 import { TerminalCursorOutputFilter } from "./terminalCursorOutputFilter";
 import { TerminalImeAnchor } from "./terminalImeAnchor";
+import { takeTerminalOutputBatch, terminalOutputChunkSize } from "./terminalOutputBatch";
 import { Terminal as XTerm } from "@xterm/xterm";
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import "@xterm/xterm/css/xterm.css";
@@ -17,7 +18,7 @@ import type {
   TerminalStarted,
 } from "./types";
 
-const outputChunkSize = 4096;
+const outputChunkSize = terminalOutputChunkSize;
 const outputCursorRevealDelayMs = 2400;
 const tuiOutputCursorRevealDelayMs = 8000;
 const resizeDebounceMs = 40;
@@ -2173,7 +2174,7 @@ export const TerminalSessionView = forwardRef<TerminalSessionHandle, TerminalSes
 
     function pumpTerminalOutput() {
       const terminal = terminalRef.current;
-      const next = outputQueueRef.current.shift();
+      const next = takeTerminalOutputBatch(outputQueueRef.current);
 
       if (!terminal || !next) {
         outputWriterActiveRef.current = false;
