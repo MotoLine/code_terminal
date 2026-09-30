@@ -263,6 +263,7 @@ export const TerminalSessionView = forwardRef<TerminalSessionHandle, TerminalSes
     const isLifecycleStoppingRef = useRef(false);
     const outputQueueRef = useRef<string[]>([]);
     const outputWriterActiveRef = useRef(false);
+    const outputSettleFrameRef = useRef<number | null>(null);
     const outputCursorSuppressedRef = useRef(false);
     const outputCursorControllerRef = useRef<TerminalCursorController | null>(null);
     const terminalCursorOutputFilterRef = useRef(new TerminalCursorOutputFilter());
@@ -2071,6 +2072,10 @@ export const TerminalSessionView = forwardRef<TerminalSessionHandle, TerminalSes
     }
 
     function clearOutputQueue() {
+      if (outputSettleFrameRef.current !== null) {
+        window.cancelAnimationFrame(outputSettleFrameRef.current);
+        outputSettleFrameRef.current = null;
+      }
       outputQueueRef.current = [];
       outputWriterActiveRef.current = false;
       terminalCursorOutputFilterRef.current.reset();
@@ -2150,13 +2155,28 @@ export const TerminalSessionView = forwardRef<TerminalSessionHandle, TerminalSes
           hadTerminal: Boolean(terminal),
           liveTuiOutputQueued: liveTuiOutputQueuedRef.current,
         });
-        if (terminal && liveTuiOutputQueuedRef.current) {
-          liveTuiOutputQueuedRef.current = false;
-          scheduleLiveTuiSnapshot();
-        } else {
-          liveTuiOutputQueuedRef.current = false;
+        // xterm may still be flushing synchronized output (DEC 2026) from the
+        // final write callback. Give its renderer two frames to present that
+        // batch before changing React state or the cursor layer. Doing both in
+        // the same frame can repaint the whole terminal at stream end.
+        if (outputSettleFrameRef.current !== null) {
+          window.cancelAnimationFrame(outputSettleFrameRef.current);
         }
-        revealCursorAfterOutputSettles(hostRef.current?.classList.contains("terminal-tui-active") ?? false);
+        outputSettleFrameRef.current = window.requestAnimationFrame(() => {
+          outputSettleFrameRef.current = window.requestAnimationFrame(() => {
+            outputSettleFrameRef.current = null;
+            if (outputWriterActiveRef.current || outputQueueRef.current.length > 0) return;
+            if (terminal && liveTuiOutputQueuedRef.current) {
+              liveTuiOutputQueuedRef.current = false;
+              scheduleLiveTuiSnapshot();
+            } else {
+              liveTuiOutputQueuedRef.current = false;
+            }
+            revealCursorAfterOutputSettles(
+              hostRef.current?.classList.contains("terminal-tui-active") ?? false,
+            );
+          });
+        });
         return;
       }
 
