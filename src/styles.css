@@ -2527,6 +2527,28 @@ textarea {
   background: transparent;
 }
 
+/* xterm 6 uses its own scrollbar, not the legacy viewport's native one.
+   Keep its existing drag/track-click handling available even after mouseout. */
+.terminal-host .xterm .xterm-scrollable-element > .scrollbar.vertical {
+  opacity: 1;
+  pointer-events: auto;
+  transition: none;
+  z-index: 11;
+  background: color-mix(in srgb, var(--terminal-fg, #d8e1e8) 8%, var(--terminal-bg, #1b1b19));
+}
+
+.terminal-host .xterm .xterm-scrollable-element > .scrollbar.vertical > .slider {
+  background: color-mix(in srgb, var(--terminal-fg, #d8e1e8) 38%, var(--terminal-bg, #1b1b19));
+}
+
+.terminal-host .xterm .xterm-scrollable-element > .scrollbar.vertical > .slider:hover {
+  background: color-mix(in srgb, var(--terminal-fg, #d8e1e8) 52%, var(--terminal-bg, #1b1b19));
+}
+
+.terminal-host .xterm .xterm-scrollable-element > .scrollbar.vertical > .slider.active {
+  background: color-mix(in srgb, var(--terminal-fg, #d8e1e8) 65%, var(--terminal-bg, #1b1b19));
+}
+
 .terminal-host.active.terminal-output-streaming .xterm-cursor,
 .terminal-host.active.terminal-output-streaming .xterm-cursor-layer {
   opacity: 0 !important;
