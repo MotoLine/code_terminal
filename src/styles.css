@@ -2177,7 +2177,8 @@ textarea {
 .terminal-view-switch {
   position: absolute;
   top: 10px;
-  right: 12px;
+  /* Leave the right-edge scrollbar's entire drag track unobstructed. */
+  right: 32px;
   z-index: 5;
   display: inline-flex;
   align-items: center;
@@ -2534,19 +2535,28 @@ textarea {
   pointer-events: auto;
   transition: none;
   z-index: 11;
-  background: color-mix(in srgb, var(--terminal-fg, #d8e1e8) 8%, var(--terminal-bg, #1b1b19));
+  background: transparent;
 }
 
 .terminal-host .xterm .xterm-scrollable-element > .scrollbar.vertical > .slider {
-  background: color-mix(in srgb, var(--terminal-fg, #d8e1e8) 38%, var(--terminal-bg, #1b1b19));
+  box-sizing: border-box;
+  border: 4px solid transparent;
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--terminal-fg, #d8e1e8) 30%, transparent);
+  background-clip: padding-box;
 }
 
 .terminal-host .xterm .xterm-scrollable-element > .scrollbar.vertical > .slider:hover {
-  background: color-mix(in srgb, var(--terminal-fg, #d8e1e8) 52%, var(--terminal-bg, #1b1b19));
+  background-color: color-mix(in srgb, var(--terminal-fg, #d8e1e8) 48%, transparent);
 }
 
 .terminal-host .xterm .xterm-scrollable-element > .scrollbar.vertical > .slider.active {
-  background: color-mix(in srgb, var(--terminal-fg, #d8e1e8) 65%, var(--terminal-bg, #1b1b19));
+  background-color: color-mix(in srgb, var(--terminal-fg, #d8e1e8) 60%, transparent);
+}
+
+/* A full-height slider is not draggable: do not present it as an active thumb. */
+.terminal-host:not(.terminal-has-scrollback) .xterm .xterm-scrollable-element > .scrollbar.vertical > .slider {
+  background-color: transparent;
 }
 
 .terminal-host.active.terminal-output-streaming .xterm-cursor,

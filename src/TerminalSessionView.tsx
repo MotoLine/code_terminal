@@ -2819,6 +2819,19 @@ export const TerminalSessionView = forwardRef<TerminalSessionHandle, TerminalSes
       terminal.open(host);
       terminalRef.current = terminal;
       fitRef.current = fit;
+      const syncScrollbackAvailability = () => {
+        const buffer = terminal.buffer.active;
+        const canScroll = buffer.baseY > 0;
+        host.classList.toggle("terminal-has-scrollback", canScroll);
+        const scrollbar = host.querySelector<HTMLElement>(".scrollbar.vertical");
+        if (scrollbar) {
+          scrollbar.title = canScroll ? "拖动查看终端历史输出" :
+            buffer.type === "alternate" ? "当前全屏程序管理滚动，请使用程序内的翻页操作" : "暂无可滚动的历史输出";
+        }
+      };
+      syncScrollbackAvailability();
+      const scrollbackRenderDisposable = terminal.onRender(syncScrollbackAvailability);
+      const scrollbackBufferDisposable = terminal.buffer.onBufferChange(syncScrollbackAvailability);
       writeTuiDebugLog("xterm-opened", {
         fontSize: appearance.fontSize,
         lineHeight: appearance.lineHeight,
@@ -2945,6 +2958,8 @@ export const TerminalSessionView = forwardRef<TerminalSessionHandle, TerminalSes
         terminal.textarea?.removeEventListener("blur", compositionEndListener);
         terminal.attachCustomKeyEventHandler(() => true);
         bufferDisposable.dispose();
+        scrollbackRenderDisposable.dispose();
+        scrollbackBufferDisposable.dispose();
         dataDisposable.dispose();
         unlistenOutput.then((unlisten) => unlisten());
         unlistenExit.then((unlisten) => unlisten());

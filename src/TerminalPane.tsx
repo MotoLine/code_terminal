@@ -1223,7 +1223,12 @@ export function TerminalPane({
               data-tab-id={tab.id}
               key={tab.id}
               style={getGridCellStyle(tab.id, visibleTabs, activeLayout)}
-              onMouseDown={() => focusTerminal(tab.id)}
+              onMouseDown={(event) => {
+                // Let xterm retain pointer capture while dragging its scrollbar.
+                // Refocusing the input here can trigger a TUI focus redraw.
+                if (event.target instanceof Element && event.target.closest(".scrollbar")) return;
+                focusTerminal(tab.id);
+              }}
             >
               <div
                 className="terminal-cell-header"
