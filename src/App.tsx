@@ -206,6 +206,7 @@ export function App() {
   } | null>(null);
   const [openingProjectWindowId, setOpeningProjectWindowId] = useState<string | null>(null);
   const [openingProjectFolderId, setOpeningProjectFolderId] = useState<string | null>(null);
+  const [removingProjectId, setRemovingProjectId] = useState<string | null>(null);
   const [codexSessionsByProject, setCodexSessionsByProject] = useState<Record<string, CodexSessionSummary[]>>({});
   const [loadingCodexSessionProjectIds, setLoadingCodexSessionProjectIds] = useState<Set<string>>(new Set());
   const [codexSessionErrors, setCodexSessionErrors] = useState<Record<string, string | null>>({});
@@ -833,14 +834,29 @@ export function App() {
   }
 
   async function removeProject(projectId: string) {
+    const project = state.projects.find((item) => item.id === projectId);
+    if (!project || removingProjectId) return;
+
+    const shouldRemove = window.confirm(
+      `从项目列表移除“${project.name}”？\n\n项目文件夹会保留在磁盘上，但该项目正在运行的终端会话将停止。`,
+    );
+    if (!shouldRemove) return;
+
     setError(null);
-    const updated = await invoke<WorkbenchState>("remove_project", { projectId });
-    if (windowProjectId === projectId) {
-      setWindowProjectId(updated.activeProjectId || null);
-      setState(applyWindowProject(updated, updated.activeProjectId));
-      return;
+    setRemovingProjectId(projectId);
+    try {
+      const updated = await invoke<WorkbenchState>("remove_project", { projectId });
+      if (windowProjectId === projectId) {
+        setWindowProjectId(updated.activeProjectId || null);
+        setState(applyWindowProject(updated, updated.activeProjectId));
+        return;
+      }
+      setState(applyWindowProject(updated));
+    } catch (err) {
+      setError(String(err));
+    } finally {
+      setRemovingProjectId(null);
     }
-    setState(applyWindowProject(updated));
   }
 
   async function openProjectWindow(projectId: string) {
@@ -1284,6 +1300,16 @@ export function App() {
                         </span>
                       </button>
                       <span className="project-time">{formatRelativeTime(project.lastOpenedAt)}前</span>
+                      <button
+                        aria-label={`从列表移除项目 ${project.name}`}
+                        className="project-remove-button"
+                        disabled={removingProjectId === project.id}
+                        title="从列表移除项目（保留文件夹）"
+                        type="button"
+                        onClick={() => void removeProject(project.id)}
+                      >
+                        <Trash2 size={14} />
+                      </button>
                     </div>
 
                     {isSessionsExpanded && (
