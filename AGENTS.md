@@ -2,6 +2,8 @@
 
 - 每次修改完成后，运行对应检查或构建，并提交一把 git。
 - 每次修改完成后，都需要重新打包 Windows exe。
+- 在 macOS 开发机上无法交叉构建 Windows exe 时，用 `npm run bundle:mac` 验证桌面包，并在提交说明里注明未重打 Windows exe 的原因。
+- macOS 打包依赖 `src-tauri/icons/icon.icns` 和 `src-tauri/icons/icon.png`，替换图标时必须和 `icon.ico` 一起更新。
 - 提交前说明修改了哪些文件、为什么修改，以及实际验证命令和结果。
 - 开始处理仓库任务时，先阅读 `docs/agent-harness/README.md`，按其中的 rules / memory / skills / subagents 顺序加载需要的上下文。
 - `docs/agent-harness/memory.yaml` 用于记录稳定项目记忆和部署变量；严禁写入服务器密码、token、密钥、证书或 `.env` 明文。

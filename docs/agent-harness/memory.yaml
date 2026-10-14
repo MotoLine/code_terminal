@@ -1,5 +1,5 @@
 schema_version: 1
-updated: "2026-06-22"
+updated: "2026-10-14"
 
 project:
   name: "Code Terminal"
@@ -8,6 +8,7 @@ project:
   language: "zh-CN"
   primary_surfaces:
     - "Windows desktop exe"
+    - "macOS desktop dmg (Apple Silicon)"
     - "Linux server Web UI for phone access"
 
 commands:
@@ -16,6 +17,8 @@ commands:
   dev_tauri: "npm run dev"
   build_frontend: "npm run build:frontend"
   build_windows_exe: "npm run build"
+  build_macos_dmg: "npm run bundle:mac"
+  build_macos_universal: "rustup target add x86_64-apple-darwin && npm run bundle:mac:universal"
   build_server: "npm run build:server"
   run_server: "npm run server"
   local_full_stack_test: "npm run server"
@@ -23,7 +26,14 @@ commands:
 artifacts:
   frontend_dist: "dist/"
   windows_exe: "src-tauri/target/release/code-terminal.exe"
+  macos_app: "src-tauri/target/release/bundle/macos/Code Terminal.app"
+  macos_dmg: "src-tauri/target/release/bundle/dmg/Code Terminal_<version>_aarch64.dmg"
   server_binary: "src-tauri/target/release/code-terminal-server"
+
+build_environment:
+  - "macOS bundle 需要 icons/icon.icns，tauri-build 在 Unix 目标下还需要 icons/icon.png，两者都要和 icons/icon.ico 一起维护。"
+  - "macOS 本机未接受 Xcode 许可时链接会失败；正式环境执行 sudo xcodebuild -license，临时绕行可用 DEVELOPER_DIR=/Library/Developer/CommandLineTools npm run bundle:mac。"
+  - "macOS 发布前未配置签名和 notarization，用户首次启动需要在系统设置里手动允许。"
 
 deployment:
   release_sync_policy:
@@ -63,6 +73,7 @@ validation:
     - "npm run build:frontend"
   desktop:
     - "npm run build"
+    - "npm run bundle:mac"
   mobile_ui:
     viewports:
       - "390x844"
