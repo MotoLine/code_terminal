@@ -250,26 +250,14 @@ textarea {
   padding-left: 78px;
 }
 
-/* macOS 非全屏：红绿灯由系统提供且隐藏原生标题，自绘标题块不再展示 */
-.shell.mac-native-chrome:not(.mac-fullscreen) .window-title-cluster {
+/* macOS：红绿灯由系统提供且原生标题隐藏，自绘标题块（图标 + 标题 + 副标题）不展示，
+   非全屏和全屏都只保留工作区信息与设置按钮 */
+.shell.mac-native-chrome .window-title-cluster {
   display: none;
 }
 
-.shell.mac-native-chrome:not(.mac-fullscreen) .window-chrome {
+.shell.mac-native-chrome .window-chrome {
   grid-template-columns: minmax(0, 1fr) 38px auto;
-}
-
-/* macOS 全屏：系统隐藏红绿灯，仅保留标题文字（不带图标和副标题） */
-.shell.mac-native-chrome.mac-fullscreen .window-chrome {
-  padding-left: 13px;
-}
-
-.shell.mac-native-chrome.mac-fullscreen .window-brand-mark {
-  display: none;
-}
-
-.shell.mac-native-chrome.mac-fullscreen .window-title-copy small {
-  display: none;
 }
 
 .shell.custom-window-chrome .sidebar,
