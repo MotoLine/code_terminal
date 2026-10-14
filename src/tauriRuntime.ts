@@ -369,6 +369,22 @@ export function closeWindow() {
   return getCurrentWindow().close();
 }
 
+export function isWindowFullscreen() {
+  if (!isTauriRuntime()) return Promise.resolve(false);
+
+  return getCurrentWindow()
+    .isFullscreen()
+    .catch(() => false);
+}
+
+export function onWindowResized(handler: () => void): Promise<() => void> {
+  if (!isTauriRuntime()) return Promise.resolve(() => undefined);
+
+  return getCurrentWindow()
+    .onResized(() => handler())
+    .catch(() => () => undefined);
+}
+
 export function openDialog<T extends OpenDialogOptions>(options?: T): Promise<OpenDialogReturn<T>> {
   if (isTauriRuntime()) {
     return tauriOpen(options);

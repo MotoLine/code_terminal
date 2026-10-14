@@ -33,6 +33,8 @@ import {
   isMacPlatform,
   minimizeWindow,
   openDialog,
+  isWindowFullscreen,
+  onWindowResized,
   setWindowTitle,
   startWindowDrag,
   toggleWindowMaximize,
@@ -231,6 +233,7 @@ export function App() {
     canRestart: true,
     canStop: false,
   });
+  const [isMacWindowFullscreen, setIsMacWindowFullscreen] = useState(false);
   const projectListRef = useRef<HTMLElement | null>(null);
   const settingsMenuRef = useRef<HTMLDivElement | null>(null);
   const terminalControlRequestIdRef = useRef(0);
@@ -388,6 +391,33 @@ export function App() {
       .catch((err) => setError(String(err)))
       .finally(() => setIsStateLoaded(true));
   }, []);
+
+  useEffect(() => {
+    if (!isMacNativeChrome) return;
+
+    let cancelled = false;
+    let unlisten: (() => void) | null = null;
+
+    const syncFullscreen = () => {
+      void isWindowFullscreen().then((value) => {
+        if (!cancelled) setIsMacWindowFullscreen(value);
+      });
+    };
+
+    syncFullscreen();
+    void onWindowResized(syncFullscreen).then((un) => {
+      if (cancelled) {
+        un();
+        return;
+      }
+      unlisten = un;
+    });
+
+    return () => {
+      cancelled = true;
+      unlisten?.();
+    };
+  }, [isMacNativeChrome]);
 
   useEffect(() => {
     if (!mobileProjectsOpen) return;
@@ -978,7 +1008,7 @@ export function App() {
         mobileChromeHidden ? "mobile-chrome-hidden" : ""
       } ${hasCustomWindowChrome ? "custom-window-chrome" : ""} ${
         isMacNativeChrome ? "mac-native-chrome" : ""
-      }`}
+      } ${isMacNativeChrome && isMacWindowFullscreen ? "mac-fullscreen" : ""}`}
       style={terminalChromeVars}
     >
       {mobileProjectsOpen && (

@@ -250,6 +250,28 @@ textarea {
   padding-left: 78px;
 }
 
+/* macOS 非全屏：红绿灯由系统提供且隐藏原生标题，自绘标题块不再展示 */
+.shell.mac-native-chrome:not(.mac-fullscreen) .window-title-cluster {
+  display: none;
+}
+
+.shell.mac-native-chrome:not(.mac-fullscreen) .window-chrome {
+  grid-template-columns: minmax(0, 1fr) 38px auto;
+}
+
+/* macOS 全屏：系统隐藏红绿灯，仅保留标题文字（不带图标和副标题） */
+.shell.mac-native-chrome.mac-fullscreen .window-chrome {
+  padding-left: 13px;
+}
+
+.shell.mac-native-chrome.mac-fullscreen .window-brand-mark {
+  display: none;
+}
+
+.shell.mac-native-chrome.mac-fullscreen .window-title-copy small {
+  display: none;
+}
+
 .shell.custom-window-chrome .sidebar,
 .shell.custom-window-chrome .workspace {
   grid-row: 2;
@@ -2609,8 +2631,9 @@ textarea {
 }
 
 @media (max-width: 1060px) {
+  /* 不再强制 820px 最小宽度：否则 720-820px 的桌面窗口会把设置按钮裁切到视口外 */
   body {
-    min-width: 820px;
+    min-width: 0;
   }
 
   .shell {
@@ -2648,7 +2671,7 @@ textarea {
 
 }
 
-@media (max-width: 720px) {
+@media (max-width: 720px) and (pointer: coarse), (max-width: 480px) {
   body {
     min-width: 0;
   }
