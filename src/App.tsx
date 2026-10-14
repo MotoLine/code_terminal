@@ -30,6 +30,7 @@ import {
   closeWindow,
   invoke,
   isTauriRuntime,
+  isMacPlatform,
   minimizeWindow,
   openDialog,
   setWindowTitle,
@@ -256,6 +257,7 @@ export function App() {
     ? `${currentProject.name} - ${appWindowTitle}`
     : appWindowTitle;
   const hasCustomWindowChrome = isTauriRuntime();
+  const isMacNativeChrome = hasCustomWindowChrome && isMacPlatform();
   const isSidebarCollapsed = sidebarLayout.collapsed;
   const terminalChromeVars = useMemo(() => {
     const chrome = getTerminalChrome(terminalAppearance);
@@ -974,7 +976,9 @@ export function App() {
         isSidebarResizing ? "sidebar-resizing" : ""
       } ${mobileProjectsOpen ? "mobile-projects-open" : ""} ${
         mobileChromeHidden ? "mobile-chrome-hidden" : ""
-      } ${hasCustomWindowChrome ? "custom-window-chrome" : ""}`}
+      } ${hasCustomWindowChrome ? "custom-window-chrome" : ""} ${
+        isMacNativeChrome ? "mac-native-chrome" : ""
+      }`}
       style={terminalChromeVars}
     >
       {mobileProjectsOpen && (
@@ -1049,36 +1053,38 @@ export function App() {
               <Settings size={15} />
             </button>
           </div>
-          <div
-            className="window-controls"
-            onDoubleClick={(event) => event.stopPropagation()}
-            onPointerDown={(event) => event.stopPropagation()}
-          >
-            <button
-              className="window-control"
-              title="最小化"
-              type="button"
-              onClick={() => void minimizeWindow().catch(() => undefined)}
+          {!isMacNativeChrome && (
+            <div
+              className="window-controls"
+              onDoubleClick={(event) => event.stopPropagation()}
+              onPointerDown={(event) => event.stopPropagation()}
             >
-              <Minus size={15} />
-            </button>
-            <button
-              className="window-control"
-              title="最大化 / 还原"
-              type="button"
-              onClick={() => void toggleWindowMaximize().catch(() => undefined)}
-            >
-              <Maximize2 size={13} />
-            </button>
-            <button
-              className="window-control close"
-              title="关闭"
-              type="button"
-              onClick={() => void closeWindow().catch(() => undefined)}
-            >
-              <X size={15} />
-            </button>
-          </div>
+              <button
+                className="window-control"
+                title="最小化"
+                type="button"
+                onClick={() => void minimizeWindow().catch(() => undefined)}
+              >
+                <Minus size={15} />
+              </button>
+              <button
+                className="window-control"
+                title="最大化 / 还原"
+                type="button"
+                onClick={() => void toggleWindowMaximize().catch(() => undefined)}
+              >
+                <Maximize2 size={13} />
+              </button>
+              <button
+                className="window-control close"
+                title="关闭"
+                type="button"
+                onClick={() => void closeWindow().catch(() => undefined)}
+              >
+                <X size={15} />
+              </button>
+            </div>
+          )}
         </header>
       )}
 

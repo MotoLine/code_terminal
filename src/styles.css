@@ -245,6 +245,11 @@ textarea {
   background: #c83b42;
 }
 
+/* macOS: 原生红绿灯叠加在顶部栏左侧，预留空间并隐藏自定义窗口按钮 */
+.shell.mac-native-chrome .window-chrome {
+  padding-left: 78px;
+}
+
 .shell.custom-window-chrome .sidebar,
 .shell.custom-window-chrome .workspace {
   grid-row: 2;
