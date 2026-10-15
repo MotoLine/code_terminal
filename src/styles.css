@@ -2664,6 +2664,11 @@ textarea {
     min-width: 0;
   }
 
+  .shell.mac-native-chrome .window-chrome {
+    padding-left: 78px;
+    grid-template-columns: minmax(0, 1fr) 34px;
+  }
+
   .shell {
     grid-template-columns: minmax(0, 1fr);
     background: var(--terminal-bg, #070b10);

@@ -1,5 +1,5 @@
 schema_version: 1
-updated: "2026-10-14"
+updated: "2026-10-15"
 
 project:
   name: "Code Terminal"
@@ -34,6 +34,7 @@ build_environment:
   - "macOS bundle 需要 icons/icon.icns，tauri-build 在 Unix 目标下还需要 icons/icon.png，两者都要和 icons/icon.ico 一起维护。"
   - "macOS 本机未接受 Xcode 许可时链接会失败；正式环境执行 sudo xcodebuild -license，临时绕行可用 DEVELOPER_DIR=/Library/Developer/CommandLineTools npm run bundle:mac。"
   - "macOS 发布前未配置签名和 notarization，用户首次启动需要在系统设置里手动允许。"
+  - "tauri.macos.conf.json 的 app.windows 会整段替换基础窗口配置，修改窗口尺寸、标题或最小尺寸时必须同步更新该文件。"
 
 deployment:
   release_sync_policy:

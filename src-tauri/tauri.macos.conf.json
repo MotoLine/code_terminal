@@ -2,9 +2,17 @@
   "app": {
     "windows": [
       {
+        "title": "未选择项目",
+        "width": 1280,
+        "height": 820,
+        "minWidth": 360,
+        "minHeight": 420,
+        "resizable": true,
         "decorations": true,
         "titleBarStyle": "Overlay",
-        "hiddenTitle": true
+        "hiddenTitle": true,
+        "shadow": true,
+        "backgroundColor": "#070b10"
       }
     ]
   }
