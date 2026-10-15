@@ -11,14 +11,17 @@
 ## 下载
 
 - [下载 Windows exe](https://github.com/hh357418341-create/code_terminal/releases/download/app-v0.1.0/code-terminal.exe)
+- [下载 macOS dmg（Apple Silicon）](https://github.com/hh357418341-create/code_terminal/releases/download/app-v0.1.0/Code%20Terminal_0.1.0_aarch64.dmg)
+- [下载 macOS app（zip，Apple Silicon）](https://github.com/hh357418341-create/code_terminal/releases/download/app-v0.1.0/code-terminal-macos-app.zip)
 - [查看所有发布文件](https://github.com/hh357418341-create/code_terminal/releases/tag/app-v0.1.0)
+- [查看最新发布](https://github.com/hh357418341-create/code_terminal/releases/latest)
 
-当前公开下载优先提供 Windows 版本；macOS / Linux 版本仍在验证中。
+Windows 和 macOS 产物都由 `Release` 工作流上传到同一个 Release：`code-terminal.exe` 是 Windows 便携版，`Code Terminal_<版本>_aarch64.dmg` 是 macOS 安装包，`code-terminal-macos-app.zip` 是免安装的 app 压缩包。当前 `app-v0.1.0` 已经提供 Windows exe，macOS 的 dmg / app zip 需要等包含 macOS 构建的发布上线后才可下载；如果链接暂时不可用，到「查看最新发布」里找最新文件，或按下面「构建 macOS dmg」本地打包。Linux 版本仍在验证中。
 
 ## 平台状态
 
 - **Windows**：主力支持平台，当前优先打磨和发布。
-- **macOS**：计划支持，已准备自动构建；未配置签名和 notarization 前先作为实验版本。
+- **macOS**：已支持打包，Release 会自动产出 Apple Silicon 的 app 和 dmg；未配置签名和 notarization，首次启动会被 Gatekeeper 拦截，需要右键打开或在「系统设置 → 隐私与安全性」里允许。
 - **Linux**：计划支持，已准备自动构建；不同发行版依赖和桌面环境仍需要继续验证。
 
 ## 适合谁
@@ -67,6 +70,32 @@ npm run bundle
 ```
 
 Windows MSI 打包会下载 WiX 工具链，网络较慢时可能需要重试。
+
+## 构建 macOS dmg
+
+```bash
+npm run bundle:mac
+```
+
+构建完成后，产物位于：
+
+```text
+src-tauri/target/release/bundle/macos/Code Terminal.app
+src-tauri/target/release/bundle/dmg/Code Terminal_0.1.0_aarch64.dmg
+```
+
+默认产物是 Apple Silicon（aarch64）。如果需要同时兼容 Intel 芯片，先安装交叉编译目标再打通用包：
+
+```bash
+rustup target add x86_64-apple-darwin
+npm run bundle:mac:universal
+```
+
+说明：
+
+- 当前产物没有签名和 notarization，双击时系统会提示「无法验证开发者」，需要右键点击应用选择「打开」。
+- 需要正式签名时，准备好 Apple 开发者证书后设置 `APPLE_SIGNING_IDENTITY`、`APPLE_CERTIFICATE`、`APPLE_CERTIFICATE_PASSWORD`，需要公证时再补充 `APPLE_ID`、`APPLE_PASSWORD`、`APPLE_TEAM_ID`，然后重新执行 `npm run bundle:mac`。
+- macOS 打包需要 `icons/icon.icns` 和 `icons/icon.png`，仓库已经提供；替换图标时它们要和 `icons/icon.ico` 一起更新。
 
 ## Linux 服务器和手机访问
 
@@ -124,7 +153,7 @@ src-tauri/target/release/code-terminal-server
 仓库包含 GitHub Actions 工作流：
 
 - `CI`：在 push 和 pull request 时检查前端构建，并在 Windows、macOS、Linux 上运行 Rust backend `cargo check`。
-- `Release`：手动触发或推送 `app-v*` tag 时构建 Windows 安装产物和便携 exe，并发布为 prerelease。
+- `Release`：手动触发或推送 `app-v*` tag 时构建 Windows 安装产物、便携 exe 和 macOS app/dmg，并发布为 prerelease。
 
 发布一个版本可以这样操作：
 
@@ -145,7 +174,7 @@ git -c http.proxy=http://127.0.0.1:7897 -c https.proxy=http://127.0.0.1:7897 pus
 - **Frontend**：React 18、TypeScript、Vite
 - **Terminal UI**：xterm.js
 - **Backend**：Rust、portable-pty
-- **Platform focus**：Windows 优先，macOS/Linux 持续验证
+- **Platform focus**：Windows 优先，macOS 已可打包发布，Linux 持续验证
 
 ## 本地终端行为
 

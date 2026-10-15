@@ -289,6 +289,12 @@ export function isTauriRuntime() {
   return isTauri();
 }
 
+export function isMacPlatform() {
+  if (typeof window === "undefined") return false;
+  const ua = window.navigator.userAgent;
+  return /Macintosh|Mac OS X/.test(ua) && !/iPhone|iPad|iPod/.test(ua);
+}
+
 export function invoke<T>(cmd: string, args?: InvokeArgs, options?: InvokeOptions): Promise<T> {
   if (isTauriRuntime()) {
     return tauriInvoke<T>(cmd, args, options);
@@ -362,6 +368,7 @@ export function closeWindow() {
 
   return getCurrentWindow().close();
 }
+
 
 export function openDialog<T extends OpenDialogOptions>(options?: T): Promise<OpenDialogReturn<T>> {
   if (isTauriRuntime()) {

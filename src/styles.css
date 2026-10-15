@@ -245,6 +245,21 @@ textarea {
   background: #c83b42;
 }
 
+/* macOS: 原生红绿灯叠加在顶部栏左侧，预留空间并隐藏自定义窗口按钮 */
+.shell.mac-native-chrome .window-chrome {
+  padding-left: 78px;
+}
+
+/* macOS：红绿灯由系统提供且原生标题隐藏，自绘标题块（图标 + 标题 + 副标题）不展示，
+   非全屏和全屏都只保留工作区信息与设置按钮 */
+.shell.mac-native-chrome .window-title-cluster {
+  display: none;
+}
+
+.shell.mac-native-chrome .window-chrome {
+  grid-template-columns: minmax(0, 1fr) 38px auto;
+}
+
 .shell.custom-window-chrome .sidebar,
 .shell.custom-window-chrome .workspace {
   grid-row: 2;
@@ -2604,8 +2619,9 @@ textarea {
 }
 
 @media (max-width: 1060px) {
+  /* 不再强制 820px 最小宽度：否则 720-820px 的桌面窗口会把设置按钮裁切到视口外 */
   body {
-    min-width: 820px;
+    min-width: 0;
   }
 
   .shell {
@@ -2643,7 +2659,7 @@ textarea {
 
 }
 
-@media (max-width: 720px) {
+@media (max-width: 720px) and (pointer: coarse), (max-width: 480px) {
   body {
     min-width: 0;
   }
